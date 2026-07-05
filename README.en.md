@@ -133,6 +133,7 @@ Every feature in this extension is free. The following is a completely optional 
 
 ## Usage
 
+- Pin to the toolbar
 - Select text on a page → right-click → "Send selected text by email"
 - Click the toolbar icon to open a menu for free-form text, URL sending, screenshot sending, and more
 - Register multiple recipients in settings; whichever one is set as "default" is used for one-click sending. You can always change details or unset the default later via the "Edit" button
