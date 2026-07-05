@@ -28,6 +28,7 @@ async function init() {
       cb.type = "checkbox";
       cb.value = r.id;
       cb.dataset.recipientType = r.type; // gas/make自動送信の警告表示判定に使う
+      if (r.isDefault) cb.checked = true; // 既定の送信先は最初からチェックしておく（ポップアップ側と同じ挙動）
       // チェックボックスの変化があるたびにボタン表記を更新
       cb.addEventListener("change", syncBulkUI);
 
@@ -44,25 +45,12 @@ async function init() {
       list.appendChild(item);
     });
 
-    // 1件だけの場合は即送信（ただしGAS/Make自動送信は実際にメールが飛んでしまうため、
-    // 誤操作防止のため必ずユーザーのクリックを挟む＝自動確定させない）
-    const isAutoChannelOnly = recipients.length === 1 && (recipients[0].type === "gas" || recipients[0].type === "make");
-
-    if (recipients.length === 1 && !isAutoChannelOnly) {
-      const cb = list.querySelector("input[type=checkbox]");
-      cb.checked = true;
-      await sendToSelected();
-      return;
+    // 送信先が1件でも、必ずユーザーのクリックを挟んでから送信する（自動確定させない）
+    bulkActions.style.display = "flex";
+    if (recipients.length === 1) {
+      list.querySelector("input[type=checkbox]").checked = true;
     }
-
-    if (recipients.length > 1 || isAutoChannelOnly) {
-      bulkActions.style.display = "flex";
-      if (isAutoChannelOnly) {
-        // 選び直す手間は省きつつ、実際の送信はボタンクリックを必須にする
-        list.querySelector("input[type=checkbox]").checked = true;
-      }
-      syncBulkUI(); // 初期状態を反映
-    }
+    syncBulkUI(); // 初期状態を反映
   }
 
   // 設定画面へのボタン

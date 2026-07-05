@@ -118,12 +118,6 @@
 
     <section id="tab-general" class="tab-panel">
       <h2 data-i18n="generalHeading">その他設定</h2>
-      <div class="form-row checkbox-row">
-        <label>
-          <input type="checkbox" id="useDefaultDirectly" checked />
-          <span data-i18n="useDefaultDirectlyLabel">既定の送信先がある場合、右クリック送信でそのままそれを使う（選択画面を出さない）</span>
-        </label>
-      </div>
       <div class="form-row">
         <label data-i18n="uiLangLabel">表示言語</label>
         <select id="uiLangSelect">
@@ -176,7 +170,7 @@
           </div>
           <div class="form-row">
             <label data-i18n="gasSecretLabel">共有シークレット（任意・推奨）</label>
-            <input type="text" id="gasSecret" placeholder="任意の合言葉" />
+            <input type="text" id="gasSecret" data-i18n-placeholder="gasSecretPlaceholder" placeholder="任意の合言葉" />
           </div>
           <div class="form-row checkbox-row">
             <label><input type="checkbox" id="gasEnabled" checked /> <span data-i18n="webhookEnabledLabel">有効にする</span></label>

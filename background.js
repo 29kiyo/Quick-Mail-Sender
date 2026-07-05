@@ -13,8 +13,9 @@ async function getLang() {
   const uiLang = settings?.uiLang;
   if (uiLang && uiLang !== "auto") return uiLang;
   // service workerにはnavigator.languageがある
-  const nav = (navigator.language || "ja").toLowerCase();
-  return nav.startsWith("en") ? "en" : "ja";
+  // 自動判定: 日本語ブラウザのみja、それ以外（未対応言語も含む）はすべて英語にフォールバックする
+  const nav = (navigator.language || "en").toLowerCase();
+  return nav.startsWith("ja") ? "ja" : "en";
 }
 
 function tr(lang, key, ...args) {
@@ -42,23 +43,10 @@ chrome.storage.onChanged.addListener((changes) => {
 });
 
 // 送信先を解決する。
-// - 0件: 通知してnullを返す(従来通り)
-// - 1件のみ: それを使う
-// - 既定(★)あり: それを使う
-// - 既定なし & 複数件: 選択ウィンドウ(picker.html)を開き、pendingActionに後続処理を保存して
-//   undefined を返す(=呼び出し側はここで処理を中断し、選択後の続きはpickerからの
-//   メッセージで再開する)
+// 常にpicker.html（選択ウィンドウ）を開いてユーザーに送信先を選んでもらう。
+// pendingActionに後続処理を保存し、undefined を返す(=呼び出し側はここで処理を中断し、
+// 選択後の続きはpickerからのメッセージで再開する)
 async function resolveRecipientOrAskPicker(pendingAction) {
-  const settings = await Storage.getSettings();
-  const recipients = await Storage.getRecipients();
-  const def = recipients.find(r => r.isDefault);
-
-  // 既定があり「既定をそのまま使う」設定がオンの場合はpickerを出さずすぐ返す
-  if (def && settings.useDefaultDirectly === true) {
-    return def;
-  }
-
-  // それ以外（既定なし、または「常にpickerを表示する」設定）はpickerを開いて中断
   await chrome.storage.local.set({ qmsPendingAction: pendingAction });
   await chrome.windows.create({
     url: chrome.runtime.getURL("picker.html"),
@@ -311,9 +299,91 @@ async function sendScreenshot({ tab, cropRect, recipient }) {
   });
 }
 
-// Gmail コンポーズ画面を開いてスクショを自動貼り付けする
-async function openGmailWithScreenshot({ to, subject, base64, lang, authuserIndex }) {
+// 拡張子をMIMEタイプから決める（不明な場合はpngにフォールバック）
+function extFromMimeType(mime) {
+  const map = {
+    "image/png": "png", "image/jpeg": "jpg", "image/gif": "gif",
+    "image/webp": "webp", "image/svg+xml": "svg", "image/bmp": "bmp"
+  };
+  return map[mime] || "png";
+}
+
+// 右クリック「画像のURLをメール送信」：URL・掲載元ページURLに加えて、可能であれば画像本体も添付/貼り付けする。
+// 画像の取得はサイト側のCORS設定に依存するため、取得できない場合はURLのみで送信する（失敗しても静かにフォールバック）。
+async function sendImageWithUrl({ srcUrl, pageUrl, recipient }) {
+  const r = recipient;
+  if (!r) return;
+  const lang = await getLang();
+  const subject = tr(lang, "subjectImageUrl");
+  const textBody = [
+    tr(lang, "imageUrlLabel"),
+    srcUrl,
+    "",
+    tr(lang, "screenshotSourcePage"),
+    pageUrl || ""
+  ].join("\n");
+
+  let imageData = null;
+  try {
+    const res = await fetch(srcUrl);
+    if (res.ok) {
+      const blob = await res.blob();
+      if (blob.type && blob.type.startsWith("image/") && blob.size > 0) {
+        const dataUrl = await blobToDataUrl(blob);
+        imageData = { base64: dataUrl.split(",")[1], mimeType: blob.type };
+      }
+    }
+  } catch (e) {
+    // クロスオリジンの画像はCORS制限で取得できないことがある。その場合はURLのみで送信する
+    imageData = null;
+  }
+
+  if (r.type === "gas" || r.type === "make") {
+    if (imageData) {
+      const filename = `quick-mail-image-${Date.now()}.${extFromMimeType(imageData.mimeType)}`;
+      await openCompose({
+        to: r.email, subject, body: textBody, recipientType: r.type, webhookId: r.webhookId,
+        attachmentBase64: imageData.base64, attachmentFilename: filename, attachmentMimeType: imageData.mimeType
+      });
+    } else {
+      await openCompose({ to: r.email, subject, body: textBody, recipientType: r.type, webhookId: r.webhookId });
+    }
+  } else if (r.type === "gmail") {
+    const authuserIndex = await resolveAuthuserIndex(r.senderAccountId);
+    if (imageData) {
+      const filename = `image.${extFromMimeType(imageData.mimeType)}`;
+      await openGmailWithImage({
+        to: r.email, subject, body: textBody, base64: imageData.base64,
+        mimeType: imageData.mimeType, filename, lang, authuserIndex
+      });
+    } else {
+      const body = `${textBody}\n\n${tr(lang, "imageGmailNote")}`;
+      await openCompose({ to: r.email, subject, body, recipientType: r.type, authuserIndex });
+    }
+  } else {
+    // mailto（標準メールアプリ/その他）：添付不可のため、取得できた場合はダウンロードして手動添付を案内
+    let body = textBody;
+    if (imageData) {
+      const filename = `quick-mail-image-${Date.now()}.${extFromMimeType(imageData.mimeType)}`;
+      const dataUrl = `data:${imageData.mimeType};base64,${imageData.base64}`;
+      await chrome.downloads.download({ url: dataUrl, filename, saveAs: false });
+      body = `${textBody}\n\n${tr(lang, "imageSaved")} ${filename}\n${tr(lang, "imageMailtoNote")}`;
+    }
+    await openCompose({ to: r.email, subject, body, recipientType: r.type });
+  }
+
+  await Storage.addHistory({
+    type: "image",
+    recipientName: r.name,
+    recipientEmail: r.email,
+    preview: srcUrl
+  });
+}
+
+// Gmail コンポーズ画面を開いて画像を自動貼り付けする（スクリーンショット・画像URL送信の両方で使用）
+async function openGmailWithImage({ to, subject, body, base64, mimeType, filename, lang, authuserIndex }) {
   const params = new URLSearchParams({ view: "cm", fs: "1", to, su: subject });
+  if (body) params.set("body", body);
   const base = (authuserIndex !== null && authuserIndex !== undefined && authuserIndex !== "")
     ? `https://mail.google.com/mail/u/${authuserIndex}/`
     : `https://mail.google.com/mail/`;
@@ -337,29 +407,34 @@ async function openGmailWithScreenshot({ to, subject, base64, lang, authuserInde
     await chrome.scripting.executeScript({
       target: { tabId: newTab.id },
       func: pasteImageIntoGmail,
-      args: [base64, lang === "en"
-        ? "Pasting screenshot... please wait"
-        : "スクリーンショットを貼り付けています..."]
+      args: [base64, mimeType || "image/png", filename || "image.png", lang === "en"
+        ? "Pasting image... please wait"
+        : "画像を貼り付けています..."]
     });
   } catch (e) {
     // 注入失敗時はダウンロードにフォールバック
     notifyResult(
       lang === "en" ? "Auto-paste failed" : "自動貼り付けに失敗しました",
       lang === "en"
-        ? "The screenshot was not pasted automatically. Please paste it manually (Ctrl+V)."
-        : "スクリーンショットの自動貼り付けができませんでした。手動でCtrl+Vで貼り付けてください。",
+        ? "The image was not pasted automatically. Please paste it manually (Ctrl+V)."
+        : "画像の自動貼り付けができませんでした。手動でCtrl+Vで貼り付けてください。",
       true
     );
   }
 }
 
+// 互換用: 既存のスクリーンショット送信呼び出し口はそのまま（内部でopenGmailWithImageを使う）
+async function openGmailWithScreenshot({ to, subject, base64, lang, authuserIndex }) {
+  await openGmailWithImage({ to, subject, base64, mimeType: "image/png", filename: "screenshot.png", lang, authuserIndex });
+}
+
 // Gmail のコンポーズ画面に画像を貼り付ける（注入関数 - シリアライズされるため自己完結）
-function pasteImageIntoGmail(base64, hintText) {
-  function base64ToBlob(b64) {
+function pasteImageIntoGmail(base64, mimeType, filename, hintText) {
+  function base64ToBlob(b64, mime) {
     const bin = atob(b64);
     const arr = new Uint8Array(bin.length);
     for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-    return new Blob([arr], { type: "image/png" });
+    return new Blob([arr], { type: mime });
   }
 
   function tryPaste(attemptsLeft) {
@@ -378,8 +453,8 @@ function pasteImageIntoGmail(base64, hintText) {
 
     area.focus();
 
-    const blob = base64ToBlob(base64);
-    const file = new File([blob], "screenshot.png", { type: "image/png" });
+    const blob = base64ToBlob(base64, mimeType);
+    const file = new File([blob], filename, { type: mimeType });
     const dt = new DataTransfer();
     dt.items.add(file);
 
@@ -473,7 +548,12 @@ async function executePendingActionWithRecipient(recipient) {
     return;
   }
 
-  // text / url / image / tabs
+  if (pending.kind === "image") {
+    await sendImageWithUrl({ srcUrl: pending.srcUrl, pageUrl: pending.pageUrl, recipient });
+    return;
+  }
+
+  // text / url / tabs
   await sendTextLike({
     kind: pending.kind,
     text: pending.text,
@@ -497,6 +577,8 @@ async function deliverPendingWithOptionalIds(pending, recipientIds) {
     let tab;
     try { tab = await chrome.tabs.get(pending.tabId); } catch { return; }
     await sendScreenshot({ tab, cropRect: pending.rect, recipient: r });
+  } else if (pending.kind === "image") {
+    await sendImageWithUrl({ srcUrl: pending.srcUrl, pageUrl: pending.pageUrl, recipient: r });
   } else {
     await sendTextLike({ ...pending, recipient: r });
   }
@@ -515,6 +597,14 @@ async function deliverToMultipleRecipients(pending, targets) {
       let tab;
       try { tab = await chrome.tabs.get(pending.tabId); } catch { continue; }
       await sendScreenshot({ tab, cropRect: pending.rect, recipient });
+    }
+    return;
+  }
+
+  // 画像URL送信も各送信先に個別送信する（画像取得の成否や添付内容が宛先種類ごとに変わるため）
+  if (pending.kind === "image") {
+    for (const recipient of targets) {
+      await sendImageWithUrl({ srcUrl: pending.srcUrl, pageUrl: pending.pageUrl, recipient });
     }
     return;
   }
@@ -616,6 +706,10 @@ async function handlePickerOneTime({ name, email, type, senderAccountId }) {
     await sendScreenshot({ tab, cropRect: pending.rect, recipient });
     return;
   }
+  if (pending.kind === "image") {
+    await sendImageWithUrl({ srcUrl: pending.srcUrl, pageUrl: pending.pageUrl, recipient });
+    return;
+  }
   await sendTextLike({
     kind: pending.kind,
     text: pending.text,
@@ -667,11 +761,11 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     } else if (info.menuItemId === MENU_IMAGE_URL) {
       const pending = {
         kind: "image",
-        text: info.srcUrl || "",
-        subjectPrefix: tr(lang, "subjectImageUrl")
+        srcUrl: info.srcUrl || "",
+        pageUrl: tab?.url || info.pageUrl || ""
       };
       const r = await resolveRecipientOrAskPicker(pending);
-      if (r) await sendTextLike({ ...pending, recipient: r });
+      if (r) await sendImageWithUrl({ srcUrl: pending.srcUrl, pageUrl: pending.pageUrl, recipient: r });
     } else if (info.menuItemId === MENU_ALL_TABS) {
       const tabs = await chrome.tabs.query({ currentWindow: true });
       const urls = formatTabsList(tabs, noTitle);

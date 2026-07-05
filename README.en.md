@@ -4,12 +4,13 @@
 
 A Chrome / Edge extension that lets you send selected text, the current page URL, image URLs, or screenshots by email from the right-click menu or the toolbar icon.
 
+Repository: https://github.com/29kiyo/Quick-Mail-Sender
 
 ## Key features
 
 - Send selected text by email from the right-click menu
 - Send the current page URL by email from the right-click menu
-- Send an image URL by email from the right-click menu
+- Send an image URL by email from the right-click menu (the body includes the image URL and the source page URL; when possible, the image itself is automatically attached/pasted too. Depending on the site's CORS settings, the image itself may not be fetchable, in which case only the URL is included)
 - Send all open tab URLs at once (neatly numbered and titled)
 - Send free-form text from the toolbar icon (with voice input support)
 - Send full-page or region screenshots (automatically saved to Downloads)
@@ -133,11 +134,10 @@ Every feature in this extension is free. The following is a completely optional 
 
 ## Usage
 
-- Pin to the toolbar
 - Select text on a page → right-click → "Send selected text by email"
 - Click the toolbar icon to open a menu for free-form text, URL sending, screenshot sending, and more
-- Register multiple recipients in settings; whichever one is set as "default" is used for one-click sending. You can always change details or unset the default later via the "Edit" button
-- If you have multiple recipients and none is set as default, right-click sending shows a small window asking which recipient to use
+- Register multiple recipients in settings. Whichever one is set as "default" starts pre-checked in the picker window that opens on right-click sending (you can still change or add recipients before sending). You can always change details or unset the default later via the "Edit" button
+- Right-click sending (and the keyboard shortcut) always shows a small window asking which recipient(s) to use — it never sends immediately without asking
 - Turning on "One-time recipient" in the popup lets you send to an address without saving it
 - Voice input opens a small dedicated window when you click the microphone button; click the microphone button inside that window before speaking
 - **The right-click menu is not available on the address bar** (browsers do not allow extensions to add context menu items there). Instead, use the `Ctrl+Shift+U` (`Cmd+Shift+U` on Mac) shortcut to send the current page URL even while the address bar has focus. You can change this shortcut at `chrome://extensions/shortcuts` (`edge://extensions/shortcuts` on Edge).

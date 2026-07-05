@@ -14,6 +14,27 @@ function getTypeLabel(type) {
   return entry[_lang] || entry.ja;
 }
 
+// ブラウザ標準の入力チェックメッセージ（「このフィールドを入力してください」等）は
+// 拡張機能の表示言語ではなく「ブラウザ自体の言語設定」に従って表示されるため、
+// 拡張機能側でUI言語を切り替えても英語表示中に日本語のメッセージが出ることがある。
+// これを防ぐため、必須項目には自前の翻訳メッセージを setCustomValidity で設定する。
+function initCustomValidationMessages() {
+  document.querySelectorAll("input[required]").forEach(el => {
+    el.addEventListener("invalid", () => {
+      if (el.validity.valueMissing) {
+        el.setCustomValidity(t("formFieldRequiredMsg"));
+      } else if (el.validity.typeMismatch && el.type === "email") {
+        el.setCustomValidity(t("formFieldInvalidEmailMsg"));
+      } else if (el.validity.typeMismatch && el.type === "url") {
+        el.setCustomValidity(t("formFieldInvalidUrlMsg"));
+      } else {
+        el.setCustomValidity("");
+      }
+    });
+    el.addEventListener("input", () => el.setCustomValidity(""));
+  });
+}
+
 async function init() {
   await loadI18n();
   applyI18nToPage();
@@ -22,7 +43,6 @@ async function init() {
   await initThemeButtons();
   await initVoiceLang();
   await initUiLang();
-  await initUseDefaultDirectly();
   await initGasWebhooks();
   await initMakeWebhooks();
   await initSenderAccounts();
@@ -30,6 +50,7 @@ async function init() {
   initRecipientFormTypeToggle();
   initAutoSendHelpModal();
   initTabs();
+  initCustomValidationMessages();
 
   // URLハッシュ (#history, #general, #recipients, #autosend) でタブを復元
   const hash = location.hash.replace("#", "");
@@ -339,16 +360,6 @@ async function initUiLang() {
   sel.addEventListener("change", async () => {
     await Storage.saveSettings({ uiLang: sel.value });
     window.location.reload();
-  });
-}
-
-async function initUseDefaultDirectly() {
-  const settings = await Storage.getSettings();
-  const cb = document.getElementById("useDefaultDirectly");
-  if (!cb) return;
-  cb.checked = settings.useDefaultDirectly === true; // デフォルトfalse
-  cb.addEventListener("change", async () => {
-    await Storage.saveSettings({ useDefaultDirectly: cb.checked });
   });
 }
 
