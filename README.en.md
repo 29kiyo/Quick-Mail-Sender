@@ -4,7 +4,6 @@
 
 A Chrome / Edge extension that lets you send selected text, the current page URL, image URLs, or screenshots by email from the right-click menu or the toolbar icon.
 
-Repository: https://github.com/29kiyo/Quick-Mail-Sender
 
 ## Key features
 
