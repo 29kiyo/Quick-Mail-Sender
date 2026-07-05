@@ -4,7 +4,6 @@
 
 選択したテキスト・ページURL・画像URL・スクリーンショットなどを、右クリックメニューやツールバーアイコンからメール送信できる Chrome / Edge 拡張機能です。
 
-リポジトリ: https://github.com/29kiyo/Quick-Mail-Sender
 
 ## 主な機能
 
