@@ -1,0 +1,55 @@
+{
+  "manifest_version": 3,
+  "name": "Quick Mail Sender",
+  "version": "1.1.0",
+  "description": "選択テキスト・URL・スクリーンショットなどをワンクリックでメール送信できる拡張機能",
+  "permissions": [
+    "contextMenus",
+    "storage",
+    "activeTab",
+    "scripting",
+    "tabs",
+    "downloads",
+    "notifications",
+    "offscreen"
+  ],
+  "host_permissions": [
+    "https://mail.google.com/*"
+  ],
+  "optional_host_permissions": [
+    "https://script.google.com/*",
+    "https://*.make.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "Quick Mail Sender"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "options_page": "options.html",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "commands": {
+    "_execute_action": {
+      "description": "ポップアップを開く"
+    },
+    "send-page-url": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+U",
+        "mac": "Command+Shift+U"
+      },
+      "description": "現在のページURLを送信（アドレスバーにフォーカスがあっても使えます）"
+    }
+  }
+}
