@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<title>Quick Mail Sender</title>
+<link rel="stylesheet" href="lib/common.css" />
+<link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <div class="brand">
+        <img src="icons/icon32.png" alt="" />
+        <span data-i18n="brandName">Quick Mail Sender</span>
+      </div>
+      <div class="header-actions">
+        <button id="pinWindowBtn" class="icon-btn" data-i18n-title="pinWindowTitle" title="ウィンドウとして固定表示">📌</button>
+        <button id="themeToggle" class="icon-btn" data-i18n-title="themeToggleTitle" title="テーマ切替">🌓</button>
+        <button id="openOptions" class="icon-btn" data-i18n-title="openOptionsTitle" title="設定">⚙️</button>
+      </div>
+    </header>
+
+    <section class="recipient-row">
+      <div id="recipientChecklist" class="recipient-checklist"></div>
+      <p id="recipientEmptyHint" class="hint hidden" data-i18n-html="recipientEmptyHint">送信先が未登録です。<a href="#" id="recipientEmptyLink">設定画面から追加してください</a>。</p>
+      <p id="recipientAutoSendWarning" class="note danger hidden" data-i18n="pickerAutoSendWarning">⚠️ この宛先を選ぶと、確認画面なしですぐに自動送信されます。</p>
+      <label class="one-time-label">
+        <input type="checkbox" id="oneTimeToggle" />
+        <span data-i18n="oneTimeLabel">一回限りの送信先</span>
+      </label>
+    </section>
+
+    <div id="oneTimeFields" class="one-time-fields hidden">
+      <input type="text" id="oneTimeName" data-i18n-placeholder="oneTimeNamePlaceholder" placeholder="表示名（任意）" />
+      <p class="hint" data-i18n="oneTimeNameHint">※ 表示名は相手には表示されません。送信履歴で「誰に送ったか」をあとで確認しやすくするための、自分用のメモです。</p>
+      <input type="email" id="oneTimeEmail" data-i18n-placeholder="oneTimeEmailPlaceholder" placeholder="メールアドレス" />
+      <select id="oneTimeType">
+        <option value="standard" data-i18n="typeStandard">標準メールアプリ（mailto）</option>
+        <option value="gmail" data-i18n="typeGmail">Gmail（Web作成画面）</option>
+        <option value="other" data-i18n="typeOther">その他（mailto）</option>
+      </select>
+      <div id="oneTimeSenderRow" class="hidden">
+        <select id="oneTimeSenderAccount"></select>
+      </div>
+    </div>
+
+    <div class="subject-row">
+      <input type="text" id="subjectInput" data-i18n-placeholder="subjectPlaceholder" placeholder="件名（未入力の場合は自動設定されます）" />
+    </div>
+
+    <section class="text-area-row">
+      <textarea id="bodyText" rows="5" data-i18n-placeholder="bodyPlaceholder" placeholder="送信したい内容を入力（音声入力も可）"></textarea>
+      <button id="micBtn" class="icon-btn mic-btn" data-i18n-title="micTitle" title="音声入力">🎤</button>
+    </section>
+
+    <div class="primary-actions">
+      <button id="sendTextBtn" class="btn btn-primary" data-i18n="sendTextBtn">この内容を送信</button>
+    </div>
+
+    <div class="quick-actions">
+      <button id="sendUrlBtn" class="btn" data-i18n="sendUrlBtn">現在のページURLを送信</button>
+      <button id="sendAllTabsBtn" class="btn" data-i18n="sendAllTabsBtn">全タブのURLを送信</button>
+      <button id="screenshotFullBtn" class="btn" data-i18n="screenshotFullBtn">ページ全体スクショ送信</button>
+      <button id="screenshotPartialBtn" class="btn" data-i18n="screenshotPartialBtn">範囲選択スクショ送信</button>
+    </div>
+
+    <footer class="app-footer">
+      <button id="historyBtn" class="link-btn" data-i18n="historyBtn">送信履歴</button>
+      <span class="status" id="statusMsg"></span>
+    </footer>
+  </div>
+  <script src="lib/common.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

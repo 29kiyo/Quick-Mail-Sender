@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<title>Quick Mail Sender</title>
+<link rel="stylesheet" href="lib/common.css" />
+<link rel="stylesheet" href="options.css" />
+<style>
+  body { width: auto; min-width: 380px; }
+  .container { padding: 18px; max-width: none; }
+  .picker-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  .picker-title { font-size: 14px; font-weight: 600; margin: 0; }
+  .icon-btn {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    width: 30px; height: 30px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text);
+    flex-shrink: 0;
+  }
+  .icon-btn:hover { filter: brightness(0.95); }
+  .picker-hint { font-size: 12px; color: var(--text-soft); margin: 0 0 12px; }
+  .picker-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; }
+  .picker-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-align: left;
+    border: 1px solid var(--border);
+    background: var(--bg-soft);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 9px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .picker-item:hover { border-color: var(--primary); }
+  .picker-item input[type="checkbox"] { flex-shrink: 0; width: 16px; height: 16px; cursor: pointer; }
+  .picker-item .info { flex: 1; }
+  .picker-item .name { font-weight: 600; }
+  .picker-item .meta { font-size: 11px; color: var(--text-soft); margin-top: 2px; }
+  .bulk-actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .picker-divider {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 14px 0 10px;
+    color: var(--text-soft);
+    font-size: 11px;
+  }
+  .picker-divider::before, .picker-divider::after {
+    content: ""; flex: 1; height: 1px; background: var(--border);
+  }
+  .one-time-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .one-time-section input,
+  .one-time-section select {
+    width: 100%;
+    box-sizing: border-box;
+    background: var(--bg-soft);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px;
+    font-size: 13px;
+    font-family: inherit;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="picker-header">
+      <p class="picker-title" id="pickerTitle" data-i18n="pickerTitle">送信先を選んでください</p>
+      <button id="openSettingsBtn" class="icon-btn" data-i18n-title="openOptionsTitle" title="設定">⚙️</button>
+    </div>
+    <p class="picker-hint" id="pickerHint" data-i18n="pickerHint">どの宛先に送るか選択してください。</p>
+
+    <div id="pickerList" class="picker-list"></div>
+
+    <p id="autoSendWarning" class="note danger hidden" data-i18n="pickerAutoSendWarning">⚠️ この宛先を選ぶと、確認画面なしですぐに自動送信されます。</p>
+
+    <div id="bulkActions" class="bulk-actions" style="display:none">
+      <button id="sendSelectedBtn" class="btn btn-primary" data-i18n="pickerSendSelected">選択した宛先に送信</button>
+      <button id="selectAllBtn" class="btn" data-i18n="pickerSelectAll">すべて選択</button>
+    </div>
+
+    <div class="picker-divider" id="onetimeDivider" data-i18n="pickerDivider">または一回限りの宛先を使う</div>
+    <div class="one-time-section">
+      <input type="text" id="onetimeName" data-i18n-placeholder="oneTimeNamePlaceholder" placeholder="表示名（任意）" />
+      <p class="hint" data-i18n="oneTimeNameHint">※ 表示名は相手には表示されません。送信履歴で「誰に送ったか」をあとで確認しやすくするための、自分用のメモです。</p>
+      <input type="email" id="onetimeEmail" data-i18n-placeholder="oneTimeEmailPlaceholder" placeholder="メールアドレス" />
+      <select id="onetimeType">
+        <option value="standard" data-i18n="typeStandard">標準メールアプリ（mailto）</option>
+        <option value="gmail" data-i18n="typeGmail">Gmail（Web作成画面）</option>
+        <option value="other" data-i18n="typeOther">その他（mailto）</option>
+      </select>
+      <div id="onetimeSenderRow" class="hidden">
+        <select id="onetimeSenderAccount"></select>
+      </div>
+      <button id="onetimeSendBtn" class="btn btn-primary" data-i18n="pickerSendBtn">この宛先で送信</button>
+    </div>
+  </div>
+  <script src="lib/common.js"></script>
+  <script src="picker.js"></script>
+</body>
+</html>
