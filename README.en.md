@@ -182,3 +182,7 @@ If you still don't see a permission dialog, or get an error, check the following
 Tabs that were already open before you installed the extension don't have the "content script" that's automatically injected when a page loads. Reload the tab (F5) once and try again. It works fine on any tab opened, or any page navigated to, after installing the extension.
 
 Note that special pages the browser restricts extensions from running on — such as `chrome://` settings pages or extension store pages — won't work even after reloading (this is a browser limitation).
+
+## About Development
+
+The code for this tool was written entirely by AI (Claude).
