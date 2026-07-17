@@ -3,7 +3,6 @@
 **[日本語版はこちら (Japanese version)](README.md)**
 ![Downloads](https://img.shields.io/github/downloads/29kiyo/Quick-Mail-Sender/total?style=flat-square&label=Downloads&color=4c1)
 
-
 A Chrome / Edge extension that lets you send selected text, the current page URL, image URLs, or screenshots by email from the right-click menu or the toolbar icon.
 
 Repository: https://github.com/29kiyo/Quick-Mail-Sender
