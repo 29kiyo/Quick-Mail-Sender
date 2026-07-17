@@ -57,13 +57,20 @@ async function resolveRecipientOrAskPicker(pendingAction) {
   return undefined;
 }
 
-function notifyResult(title, message, isError) {
-  chrome.notifications?.create?.({
-    type: "basic",
-    iconUrl: "icons/icon128.png",
-    title,
-    message
-  });
+async function notifyResult(title, message, isError) {
+  try {
+    // MV3のサービスワーカーは、待機中のPromiseがなくなると即座に終了することがあるため、
+    // ここをawaitせず呼び出し元に戻ってしまうと、通知が実際に表示される前にサービス
+    // ワーカーが終了し、トースト通知が出ないことがある。必ずawaitして呼び出すこと。
+    await chrome.notifications?.create?.({
+      type: "basic",
+      iconUrl: "icons/icon128.png",
+      title,
+      message
+    });
+  } catch (e) {
+    console.error("[QuickMailSender] notification failed", e);
+  }
   if (isError) console.error("[QuickMailSender]", title, message);
 }
 
@@ -94,7 +101,7 @@ async function sendViaAutoChannel({ type, webhookId, to, subject, body, attachme
   if (!channel) channel = webhooks.find(w => w.enabled) || null;
 
   if (!channel || !channel.enabled || !channel.url) {
-    notifyResult(
+    await notifyResult(
       tr(lang, "notifAutoSendNotConfiguredTitle"),
       tr(lang, "notifAutoSendNotConfiguredMsg"),
       true
@@ -147,10 +154,10 @@ async function sendViaAutoChannel({ type, webhookId, to, subject, body, attachme
     if (!res.ok || data.ok === false) {
       throw new Error(data.error || `HTTP ${res.status}`);
     }
-    notifyResult(tr(lang, "statusAutoSendDoneTitle"), tr(lang, "statusAutoSendDoneMsg"), false);
+    await notifyResult(tr(lang, "statusAutoSendDoneTitle"), tr(lang, "statusAutoSendDoneMsg"), false);
     return { ok: true };
   } catch (err) {
-    notifyResult(
+    await notifyResult(
       tr(lang, "notifAutoSendFailedTitle"),
       `${tr(lang, "notifAutoSendFailedMsg")} (${err.message || err})`,
       true
@@ -194,11 +201,8 @@ async function openCompose({ to, subject, body, recipientType, attachmentBase64,
   let safeBody = body;
   let truncated = false;
   if (body && body.length > COMPOSE_BODY_LIMIT) {
-    const settings = await Storage.getSettings();
-    const lang = settings.lang || "ja";
-    const notice = lang === "en"
-      ? "\n\n[Content was too long and has been truncated. The full text has been copied to your clipboard — paste it (Ctrl+V / Cmd+V) to replace this body.]"
-      : "\n\n[内容が長すぎるため省略されました。全文はクリップボードにコピー済みです。この本文を選択して貼り付け(Ctrl+V / Cmd+V)し直してください]";
+    const lang = await getLang();
+    const notice = tr(lang, "truncatedNotice");
     safeBody = body.slice(0, COMPOSE_BODY_LIMIT) + notice;
     truncated = true;
 
@@ -214,7 +218,7 @@ async function openCompose({ to, subject, body, recipientType, attachmentBase64,
       filename: `quick-mail-full-content-${Date.now()}.txt`,
       saveAs: false
     });
-    notifyResult(
+    await notifyResult(
       tr(lang, "notifTruncatedTitle"),
       copied ? tr(lang, "notifTruncatedCopiedMsg") : tr(lang, "notifTruncatedMsg")
     );
@@ -413,7 +417,7 @@ async function openGmailWithImage({ to, subject, body, base64, mimeType, filenam
     });
   } catch (e) {
     // 注入失敗時はダウンロードにフォールバック
-    notifyResult(
+    await notifyResult(
       lang === "en" ? "Auto-paste failed" : "自動貼り付けに失敗しました",
       lang === "en"
         ? "The image was not pasted automatically. Please paste it manually (Ctrl+V)."
@@ -510,7 +514,7 @@ async function startPartialScreenshot(tab) {
     });
     await chrome.tabs.sendMessage(tab.id, { action: "qms-start-partial-screenshot" });
   } catch (e) {
-    notifyResult(
+    await notifyResult(
       tr(lang, "notifScreenshotFailTitle"),
       tr(lang, "notifScreenshotFailMsg"),
       true
@@ -538,7 +542,7 @@ async function executePendingActionWithRecipient(recipient) {
     try {
       tab = await chrome.tabs.get(pending.tabId);
     } catch {
-      notifyResult(
+      await notifyResult(
       lang === "en" ? "Cannot send" : "送信できません",
       tr(lang, "noTabClosedMsg"), true
     );
@@ -696,7 +700,7 @@ async function handlePickerOneTime({ name, email, type, senderAccountId }) {
     try {
       tab = await chrome.tabs.get(pending.tabId);
     } catch {
-      notifyResult(
+      await notifyResult(
         lang === "en" ? "Cannot send" : "送信できません",
         tr(lang, "noTabClosedMsg"),
         true
