@@ -1,6 +1,7 @@
 # Quick Mail Sender
 
 **[Read this in English](README.en.md)**
+![Downloads](https://img.shields.io/github/downloads/29kiyo/Quick-Mail-Sender/total?style=flat-square&label=Downloads&color=4c1)
 
 選択したテキスト・ページURL・画像URL・スクリーンショットなどを、右クリックメニューやツールバーアイコンからメール送信できる Chrome / Edge 拡張機能です。
 
