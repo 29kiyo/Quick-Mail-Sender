@@ -1,10 +1,10 @@
 # Quick Mail Sender
 
-![Downloads](https://img.shields.io/github/downloads/29kiyo/Quick-Mail-Sender/total?style=flat-square&label=Downloads&color=4c1)
-
 **[日本語版はこちら (Japanese version)](README.md)**
 
 A Chrome / Edge extension that lets you send selected text, the current page URL, image URLs, or screenshots by email from the right-click menu or the toolbar icon.
+
+Repository: https://github.com/29kiyo/Quick-Mail-Sender
 
 ## Key features
 
@@ -134,7 +134,6 @@ Every feature in this extension is free. The following is a completely optional 
 
 ## Usage
 
-- Pin to the toolbar.
 - Select text on a page → right-click → "Send selected text by email"
 - Click the toolbar icon to open a menu for free-form text, URL sending, screenshot sending, and more
 - Register multiple recipients in settings. Whichever one is set as "default" starts pre-checked in the picker window that opens on right-click sending (you can still change or add recipients before sending). You can always change details or unset the default later via the "Edit" button
@@ -184,7 +183,3 @@ If you still don't see a permission dialog, or get an error, check the following
 Tabs that were already open before you installed the extension don't have the "content script" that's automatically injected when a page loads. Reload the tab (F5) once and try again. It works fine on any tab opened, or any page navigated to, after installing the extension.
 
 Note that special pages the browser restricts extensions from running on — such as `chrome://` settings pages or extension store pages — won't work even after reloading (this is a browser limitation).
-
-## About Development
-
-The code for this tool was written entirely by AI (Claude).

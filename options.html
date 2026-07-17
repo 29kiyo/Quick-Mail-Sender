@@ -263,12 +263,20 @@
             <a href="https://github.com/29kiyo/Quick-Mail-Sender/blob/main/gas-template/Code.gs" target="_blank" rel="noopener">Code.gsテンプレート（GitHub）</a>
             の内容をすべてコピーし、プロジェクトに貼り付けます
           </li>
-          <li data-i18n-html="autoSendHelpGasStep3">コード内の <code>SHARED_SECRET</code> を、自分だけの合言葉に書き換えます（第三者による悪用防止のため）</li>
+          <li data-i18n-html="autoSendHelpGasStep3">コード内の <code>SHARED_SECRET</code> を、自分だけの合言葉に書き換えます（任意ですが、第三者による悪用防止のため推奨。空のままでも動作しますが、設定する場合は手順7で入力する値と完全に一致させてください）</li>
           <li data-i18n="autoSendHelpGasStep4">右上「デプロイ」→「新しいデプロイ」→ 種類で「ウェブアプリ」を選択します</li>
           <li data-i18n-html="autoSendHelpGasStep5">「実行するユーザー」を <b>自分</b>、「アクセスできるユーザー」を <b>全員</b> にしてデプロイします</li>
           <li data-i18n-html="autoSendHelpGasStep6">発行された「ウェブアプリURL」（<code>.../exec</code> で終わるURL）をコピーします</li>
           <li data-i18n="autoSendHelpGasStep7">このページの「自動送信」タブに戻り、GAS Webアプリ URLと、先ほど決めた合言葉（共有シークレット）を入力して保存します</li>
         </ol>
+        <div class="warning-box">
+          <p class="hint" data-i18n="autoSendHelpGasRedeployTitle">⚠️ コードを後から書き換えたら、必ず「新しいバージョン」として再デプロイしてください</p>
+          <p class="hint" data-i18n="autoSendHelpGasRedeployBody">
+            SHARED_SECRETを後から変更した場合も含め、コードを保存しただけでは公開中のウェブアプリURLには反映されません。
+            「デプロイ」→「デプロイを管理」→ 対象のデプロイの鉛筆アイコン（編集）→「バージョン」で「新バージョン」を選択→「デプロイ」を押して初めて変更が反映されます（URLは変わりません）。
+            これを忘れると、正しい合言葉を入力しているのに毎回「invalid secret」で失敗し続けます。
+          </p>
+        </div>
         <p class="hint" data-i18n="autoSendHelpGasScreenshotNote">スクリーンショットの自動送信もそのまま対応しています。追加設定は不要です。</p>
 
         <h3 data-i18n="autoSendHelpMakeTitle">🔧 Make.com の場合</h3>
